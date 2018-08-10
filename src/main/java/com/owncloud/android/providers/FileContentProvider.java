@@ -828,6 +828,7 @@ public class FileContentProvider extends ContentProvider {
                        + ProviderTableMeta.SYNCED_FOLDER_REMOTE_PATH + " TEXT, "          // remote path
                        + ProviderTableMeta.SYNCED_FOLDER_WIFI_ONLY + " INTEGER, "         // wifi_only
                        + ProviderTableMeta.SYNCED_FOLDER_CHARGING_ONLY + " INTEGER, "     // charging only
+                       + ProviderTableMeta.SYNCED_FOLDER_EXISTING + " INTEGER, "          // existing
                        + ProviderTableMeta.SYNCED_FOLDER_ENABLED + " INTEGER, "           // enabled
                        + ProviderTableMeta.SYNCED_FOLDER_ENABLED_TIMESTAMP_MS + " INTEGER, "           // enable date
                        + ProviderTableMeta.SYNCED_FOLDER_SUBFOLDER_BY_DATE + " INTEGER, " // subfolder by date
@@ -2053,6 +2054,24 @@ public class FileContentProvider extends ContentProvider {
                 try {
                     db.execSQL(ALTER_TABLE + ProviderTableMeta.SYNCED_FOLDERS_TABLE_NAME +
                                    ADD_COLUMN + ProviderTableMeta.SYNCED_FOLDER_HIDDEN + " INTEGER ");
+
+                    upgraded = true;
+                    db.setTransactionSuccessful();
+                } finally {
+                    db.endTransaction();
+                }
+            }
+
+            if (!upgraded) {
+                Log_OC.i(SQL, String.format(Locale.ENGLISH, UPGRADE_VERSION_MSG, oldVersion, newVersion));
+            }
+
+            if(oldVersion < 52 && newVersion >= 52) {
+                Log_OC.i(SQL, "Entering in the #52 add synced.existing");
+                db.beginTransaction();
+                try {
+                    db.execSQL(ALTER_TABLE + ProviderTableMeta.SYNCED_FOLDERS_TABLE_NAME +
+                                   ADD_COLUMN + ProviderTableMeta.SYNCED_FOLDER_EXISTING + " INTEGER "); // boolean
 
                     upgraded = true;
                     db.setTransactionSuccessful();
