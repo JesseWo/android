@@ -907,4 +907,8 @@
     <string name="folder">folder</string>
     <string name="file">file</string>
     <string name="share_internal_link">Share internal link</string>
+
+    <string name="autoupload_blacklist_pattern">Edit Exclude Patterns</string>
+    <string name="blacklist_editor_exclude_pattern_title">Exclude Pattern</string>
+    <string name="blacklist_editor_exclude_pattern_subtitle">* as wildcard may be used</string>
 </resources>
