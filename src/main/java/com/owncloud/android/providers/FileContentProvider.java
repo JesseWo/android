@@ -789,7 +789,8 @@ public class FileContentProvider extends ContentProvider {
                        + ProviderTableMeta.CAPABILITIES_RICHDOCUMENT_TEMPLATES + INTEGER
                        + ProviderTableMeta.CAPABILITIES_RICHDOCUMENT_OPTIONAL_MIMETYPE_LIST + TEXT
                        + ProviderTableMeta.CAPABILITIES_SHARING_PUBLIC_ASK_FOR_OPTIONAL_PASSWORD + INTEGER
-                       + ProviderTableMeta.CAPABILITIES_RICHDOCUMENT_PRODUCT_NAME + " TEXT );");
+                       + ProviderTableMeta.CAPABILITIES_RICHDOCUMENT_PRODUCT_NAME + TEXT
+                       + ProviderTableMeta.CAPABILITIES_DIRECT_EDITING + " TEXT );");
     }
 
     private void createUploadsTable(SQLiteDatabase db) {
@@ -2034,6 +2035,24 @@ public class FileContentProvider extends ContentProvider {
                                    " WHEN enabled = 0 THEN " + SyncedFolder.EMPTY_ENABLED_TIMESTAMP_MS + " " +
                                    " ELSE " + clock.getCurrentTime() +
                                    " END ");
+
+                    upgraded = true;
+                    db.setTransactionSuccessful();
+                } finally {
+                    db.endTransaction();
+                }
+            }
+
+            if (!upgraded) {
+                Log_OC.i(SQL, String.format(Locale.ENGLISH, UPGRADE_VERSION_MSG, oldVersion, newVersion));
+            }
+
+            if (oldVersion < 51 && newVersion >= 51) {
+                Log_OC.i(SQL, "Entering in the #51 add directEditing to capability");
+                db.beginTransaction();
+                try {
+                    db.execSQL(ALTER_TABLE + ProviderTableMeta.CAPABILITIES_TABLE_NAME +
+                                   ADD_COLUMN + ProviderTableMeta.CAPABILITIES_DIRECT_EDITING + " TEXT ");
 
                     upgraded = true;
                     db.setTransactionSuccessful();

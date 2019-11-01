@@ -54,11 +54,12 @@ import com.owncloud.android.ui.activity.NotificationsActivity;
 import com.owncloud.android.ui.activity.PassCodeActivity;
 import com.owncloud.android.ui.activity.ReceiveExternalFilesActivity;
 import com.owncloud.android.ui.activity.RequestCredentialsActivity;
-import com.owncloud.android.ui.activity.RichDocumentsWebView;
+import com.owncloud.android.ui.activity.RichDocumentsEditorWebView;
 import com.owncloud.android.ui.activity.SettingsActivity;
 import com.owncloud.android.ui.activity.ShareActivity;
 import com.owncloud.android.ui.activity.SsoGrantPermissionActivity;
 import com.owncloud.android.ui.activity.SyncedFoldersActivity;
+import com.owncloud.android.ui.activity.TextEditorWebView;
 import com.owncloud.android.ui.activity.UploadFilesActivity;
 import com.owncloud.android.ui.activity.UploadListActivity;
 import com.owncloud.android.ui.activity.UserInfoActivity;
@@ -114,7 +115,12 @@ abstract class ComponentsModule {
     @ContributesAndroidInjector abstract PreviewVideoActivity previewVideoActivity();
     @ContributesAndroidInjector abstract ReceiveExternalFilesActivity receiveExternalFilesActivity();
     @ContributesAndroidInjector abstract RequestCredentialsActivity requestCredentialsActivity();
-    @ContributesAndroidInjector abstract RichDocumentsWebView richDocumentsWebView();
+
+    @ContributesAndroidInjector
+    abstract RichDocumentsEditorWebView richDocumentsWebView();
+
+    @ContributesAndroidInjector
+    abstract TextEditorWebView textEditorWebView();
     @ContributesAndroidInjector abstract SettingsActivity settingsActivity();
     @ContributesAndroidInjector abstract ShareActivity shareActivity();
     @ContributesAndroidInjector abstract SsoGrantPermissionActivity ssoGrantPermissionActivity();

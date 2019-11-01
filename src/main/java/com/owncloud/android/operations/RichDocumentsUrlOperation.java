@@ -33,6 +33,11 @@ import org.json.JSONObject;
  * Edit a file with Richdocuments. Returns URL which can be shown in WebView.
  */
 public class RichDocumentsUrlOperation extends RemoteOperation {
+
+    /**
+     * TODO move to library
+     */
+
     private static final String TAG = RichDocumentsUrlOperation.class.getSimpleName();
     private static final int SYNC_READ_TIMEOUT = 40000;
     private static final int SYNC_CONNECTION_TIMEOUT = 5000;

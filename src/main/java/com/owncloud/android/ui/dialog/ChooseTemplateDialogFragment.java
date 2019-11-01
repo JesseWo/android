@@ -53,7 +53,7 @@ import com.owncloud.android.lib.common.OwnCloudClientManagerFactory;
 import com.owncloud.android.lib.common.operations.RemoteOperationResult;
 import com.owncloud.android.lib.common.utils.Log_OC;
 import com.owncloud.android.ui.activity.ExternalSiteWebView;
-import com.owncloud.android.ui.activity.RichDocumentsWebView;
+import com.owncloud.android.ui.activity.RichDocumentsEditorWebView;
 import com.owncloud.android.ui.adapter.TemplateAdapter;
 import com.owncloud.android.utils.DisplayUtils;
 import com.owncloud.android.utils.ThemeUtils;
@@ -242,7 +242,7 @@ public class ChooseTemplateDialogFragment extends DialogFragment implements Dial
                 if (url.isEmpty()) {
                     DisplayUtils.showSnackMessage(fragment.listView, "Error creating file from template");
                 } else {
-                    Intent collaboraWebViewIntent = new Intent(MainApp.getAppContext(), RichDocumentsWebView.class);
+                    Intent collaboraWebViewIntent = new Intent(MainApp.getAppContext(), RichDocumentsEditorWebView.class);
                     collaboraWebViewIntent.putExtra(ExternalSiteWebView.EXTRA_TITLE, "Collabora");
                     collaboraWebViewIntent.putExtra(ExternalSiteWebView.EXTRA_URL, url);
                     collaboraWebViewIntent.putExtra(ExternalSiteWebView.EXTRA_SHOW_SIDEBAR, false);

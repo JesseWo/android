@@ -73,7 +73,7 @@ import com.owncloud.android.ui.activity.FileActivity;
 import com.owncloud.android.ui.activity.FileDisplayActivity;
 import com.owncloud.android.ui.activity.FolderPickerActivity;
 import com.owncloud.android.ui.activity.OnEnforceableRefreshListener;
-import com.owncloud.android.ui.activity.RichDocumentsWebView;
+import com.owncloud.android.ui.activity.RichDocumentsEditorWebView;
 import com.owncloud.android.ui.activity.ToolbarActivity;
 import com.owncloud.android.ui.activity.UploadFilesActivity;
 import com.owncloud.android.ui.adapter.OCFileListAdapter;
@@ -103,6 +103,7 @@ import org.apache.commons.httpclient.HttpStatus;
 import org.greenrobot.eventbus.EventBus;
 import org.greenrobot.eventbus.Subscribe;
 import org.greenrobot.eventbus.ThreadMode;
+import org.jetbrains.annotations.NotNull;
 import org.parceler.Parcels;
 
 import java.io.File;
@@ -480,7 +481,7 @@ public class OCFileListFragment extends ExtendedListFragment implements
         popup.setOnMenuItemClickListener(item -> {
             Set<OCFile> checkedFiles = new HashSet<>();
             checkedFiles.add(file);
-            return onFileActionChosen(item.getItemId(), checkedFiles);
+            return onFileActionChosen(item, checkedFiles);
         });
         popup.show();
     }
@@ -632,7 +633,7 @@ public class OCFileListFragment extends ExtendedListFragment implements
         @Override
         public boolean onActionItemClicked(ActionMode mode, MenuItem item) {
             Set<OCFile> checkedFiles = mAdapter.getCheckedItems();
-            return onFileActionChosen(item.getItemId(), checkedFiles);
+            return onFileActionChosen(item, checkedFiles);
         }
 
         /**
@@ -710,7 +711,7 @@ public class OCFileListFragment extends ExtendedListFragment implements
     }
 
     @Override
-    public void onPrepareOptionsMenu(Menu menu) {
+    public void onPrepareOptionsMenu(@NotNull Menu menu) {
         Menu mMenu = menu;
 
         if (mOriginalMenuItems.size() == 0) {
@@ -942,15 +943,18 @@ public class OCFileListFragment extends ExtendedListFragment implements
                             mContainerActivity.getFileOperationsHelper().openFile(file);
                         }
                     } else {
+                        // file not downloaded, check for streaming, remote editing
                         Account account = accountManager.getCurrentAccount();
                         OCCapability capability = mContainerActivity.getStorageManager().getCapability(account.name);
 
                         if (PreviewMediaFragment.canBePreviewed(file) && accountManager.getServerVersion(account)
-                                .isMediaStreamingSupported()) {
+                            .isMediaStreamingSupported()) {
                             // stream media preview on >= NC14
                             ((FileDisplayActivity) mContainerActivity).startMediaPreview(file, 0, true, true, true);
+                        } else if (FileMenuFilter.isEditorAvailable(capability, file.getMimeType())) {
+                            mContainerActivity.getFileOperationsHelper().openFileWithTextEditor(file, getContext());
                         } else if (capability.getRichDocumentsMimeTypeList().contains(file.getMimeType()) &&
-                            android.os.Build.VERSION.SDK_INT >= RichDocumentsWebView.MINIMUM_API &&
+                            android.os.Build.VERSION.SDK_INT >= RichDocumentsEditorWebView.MINIMUM_API &&
                             capability.getRichDocumentsDirectEditing().isTrue()) {
                             mContainerActivity.getFileOperationsHelper().openFileAsRichDocument(file, getContext());
                         } else {
@@ -989,11 +993,11 @@ public class OCFileListFragment extends ExtendedListFragment implements
     /**
      * Start the appropriate action(s) on the currently selected files given menu selected by the user.
      *
-     * @param menuId       Identifier of the action menu selected by the user
+     * @param item       MenuItem selected by the user
      * @param checkedFiles List of files selected by the user on which the action should be performed
      * @return 'true' if the menu selection started any action, 'false' otherwise.
      */
-    public boolean onFileActionChosen(int menuId, Set<OCFile> checkedFiles) {
+    public boolean onFileActionChosen(MenuItem item, Set<OCFile> checkedFiles) {
         if (checkedFiles.isEmpty()) {
             return false;
         }
@@ -1001,7 +1005,7 @@ public class OCFileListFragment extends ExtendedListFragment implements
         if (checkedFiles.size() == SINGLE_SELECTION) {
             /// action only possible on a single file
             OCFile singleFile = checkedFiles.iterator().next();
-            switch (menuId) {
+            switch (item.getItemId()) {
                 case R.id.action_send_share_file: {
                     mContainerActivity.getFileOperationsHelper().sendShareFile(singleFile);
                     return true;
@@ -1014,8 +1018,15 @@ public class OCFileListFragment extends ExtendedListFragment implements
                     mContainerActivity.getFileOperationsHelper().streamMediaFile(singleFile);
                     return true;
                 }
-                case R.id.action_open_file_as_richdocument: {
-                    mContainerActivity.getFileOperationsHelper().openFileAsRichDocument(singleFile, getContext());
+                case R.id.action_edit: {
+                    Account account = ((FileActivity) mContainerActivity).getAccount();
+                    OCCapability ocCapability = mContainerActivity.getStorageManager().getCapability(account.name);
+
+                    if (FileMenuFilter.isEditorAvailable(ocCapability, singleFile.getMimeType())) {
+                        mContainerActivity.getFileOperationsHelper().openFileWithTextEditor(singleFile, getContext());
+                    } else {
+                        mContainerActivity.getFileOperationsHelper().openFileAsRichDocument(singleFile, getContext());
+                    }
                     return true;
                 }
                 case R.id.action_rename_file: {
@@ -1046,7 +1057,7 @@ public class OCFileListFragment extends ExtendedListFragment implements
         }
 
         /// actions possible on a batch of files
-        switch (menuId) {
+        switch (item.getItemId()) {
             case R.id.action_remove_file: {
                 RemoveFilesDialogFragment dialog = RemoveFilesDialogFragment.newInstance(new ArrayList<>(checkedFiles), mActiveActionMode);
                 dialog.show(getFragmentManager(), ConfirmationDialogFragment.FTAG_CONFIRMATION);

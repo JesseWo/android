@@ -31,7 +31,7 @@ import com.owncloud.android.MainApp;
  */
 public class ProviderMeta {
     public static final String DB_NAME = "filelist";
-    public static final int DB_VERSION = 50;
+    public static final int DB_VERSION = 51;
 
     private ProviderMeta() {
         // No instance
@@ -47,6 +47,8 @@ public class ProviderMeta {
         public static final String ARBITRARY_DATA_TABLE_NAME = "arbitrary_data";
         public static final String VIRTUAL_TABLE_NAME = "virtual";
         public static final String FILESYSTEM_TABLE_NAME = "filesystem";
+        public static final String EDITORS_TABLE_NAME = "editors";
+        public static final String CREATORS_TABLE_NAME = "creators";
 
         private static final String CONTENT_PREFIX = "content://";
 
@@ -192,9 +194,9 @@ public class ProviderMeta {
         public static final String CAPABILITIES_RICHDOCUMENT_DIRECT_EDITING = "richdocument_direct_editing";
         public static final String CAPABILITIES_RICHDOCUMENT_TEMPLATES = "richdocument_direct_templates";
         public static final String CAPABILITIES_RICHDOCUMENT_PRODUCT_NAME = "richdocument_product_name";
-
         public static final String CAPABILITIES_DEFAULT_SORT_ORDER = CAPABILITIES_ACCOUNT_NAME
                 + " collate nocase asc";
+        public static final String CAPABILITIES_DIRECT_EDITING = "direct_editing";
 
         //Columns of Uploads table
         public static final String UPLOADS_LOCAL_PATH = "local_path";

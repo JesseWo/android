@@ -30,40 +30,30 @@ import android.app.DownloadManager;
 import android.content.ActivityNotFoundException;
 import android.content.Context;
 import android.content.Intent;
-import android.graphics.Bitmap;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
-import android.text.TextUtils;
 import android.view.KeyEvent;
-import android.view.View;
 import android.webkit.JavascriptInterface;
 import android.webkit.ValueCallback;
 import android.webkit.WebChromeClient;
 import android.webkit.WebView;
-import android.widget.ImageView;
-import android.widget.ProgressBar;
-import android.widget.TextView;
 import android.widget.Toast;
 
 import com.bumptech.glide.Glide;
-import com.google.android.material.snackbar.Snackbar;
 import com.nextcloud.client.account.CurrentAccountProvider;
 import com.nextcloud.client.network.ClientFactory;
 import com.owncloud.android.R;
 import com.owncloud.android.datamodel.OCFile;
 import com.owncloud.android.datamodel.Template;
-import com.owncloud.android.datamodel.ThumbnailsCacheManager;
 import com.owncloud.android.lib.common.OwnCloudAccount;
 import com.owncloud.android.lib.common.operations.RemoteOperationResult;
 import com.owncloud.android.lib.common.utils.Log_OC;
 import com.owncloud.android.operations.RichDocumentsCreateAssetOperation;
-import com.owncloud.android.ui.asynctasks.LoadUrlTask;
 import com.owncloud.android.ui.asynctasks.PrintAsyncTask;
 import com.owncloud.android.ui.fragment.OCFileListFragment;
 import com.owncloud.android.utils.DisplayUtils;
 import com.owncloud.android.utils.FileStorageUtils;
-import com.owncloud.android.utils.MimeTypeUtil;
 import com.owncloud.android.utils.glide.CustomGlideStreamLoader;
 
 import org.json.JSONException;
@@ -76,41 +66,30 @@ import java.lang.ref.WeakReference;
 import javax.inject.Inject;
 
 import androidx.annotation.RequiresApi;
-import butterknife.BindView;
 import butterknife.ButterKnife;
 import butterknife.Unbinder;
-import lombok.Getter;
-import lombok.Setter;
 
 /**
  * Opens document for editing via Richdocuments app in a web view
  */
 @RequiresApi(api = Build.VERSION_CODES.LOLLIPOP)
-public class RichDocumentsWebView extends ExternalSiteWebView {
+public class RichDocumentsEditorWebView extends EditorWebView {
+    /**
+     * TODO: create intermediate abstract class, which has "loadURL", create this and TextWebView as children
+     */
 
     public static final int MINIMUM_API = Build.VERSION_CODES.LOLLIPOP;
     public static final int REQUEST_LOCAL_FILE = 101;
     private static final int REQUEST_REMOTE_FILE = 100;
-    private static final String TAG = RichDocumentsWebView.class.getSimpleName();
+    private static final String TAG = RichDocumentsEditorWebView.class.getSimpleName();
     private static final String URL = "URL";
     private static final String TYPE = "Type";
     private static final String PRINT = "print";
     private static final String NEW_NAME = "NewName";
 
     private Unbinder unbinder;
-    private OCFile file;
-    @Getter @Setter private Snackbar loadingSnackbar;
 
     public ValueCallback<Uri[]> uploadMessage;
-
-    @BindView(R.id.progressBar2)
-    ProgressBar progressBar;
-
-    @BindView(R.id.thumbnail)
-    ImageView thumbnail;
-
-    @BindView(R.id.filename)
-    TextView fileName;
 
     @Inject
     protected CurrentAccountProvider currentAccountProvider;
@@ -121,15 +100,49 @@ public class RichDocumentsWebView extends ExternalSiteWebView {
     @SuppressLint("AddJavascriptInterface") // suppress warning as webview is only used >= Lollipop
     @Override
     protected void onCreate(Bundle savedInstanceState) {
-        showToolbar = false;
-        webViewLayout = R.layout.richdocuments_webview;
         super.onCreate(savedInstanceState);
+
 
         unbinder = ButterKnife.bind(this);
 
-        file = getIntent().getParcelableExtra(EXTRA_FILE);
+        WebView.setWebContentsDebuggingEnabled(true);
+        webview.addJavascriptInterface(new RichDocumentsMobileInterface(), "RichDocumentsMobileInterface");
+        // hideLoading();
 
-        // TODO make file nullable
+        webview.setWebChromeClient(new WebChromeClient() {
+            RichDocumentsEditorWebView activity = RichDocumentsEditorWebView.this;
+
+            @Override
+            public boolean onShowFileChooser(WebView webView, ValueCallback<Uri[]> filePathCallback,
+                                             FileChooserParams fileChooserParams) {
+                if (uploadMessage != null) {
+                    uploadMessage.onReceiveValue(null);
+                    uploadMessage = null;
+                }
+
+                activity.uploadMessage = filePathCallback;
+
+                Intent intent = fileChooserParams.createIntent();
+                intent.setType("image/*");
+                intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP);
+                try {
+                    activity.startActivityForResult(intent, REQUEST_LOCAL_FILE);
+                } catch (ActivityNotFoundException e) {
+                    uploadMessage = null;
+                    Toast.makeText(getBaseContext(), "Cannot open file chooser", Toast.LENGTH_LONG).show();
+                    return false;
+                }
+
+                return true;
+            }
+        });
+
+        // load url in background
+        loadUrl(getIntent().getStringExtra(EXTRA_URL), file);
+    }
+
+    @Override
+    protected void initLoadingScreen() {
         if (file == null) {
             fileName.setText(R.string.create_file_from_template);
 
@@ -163,101 +176,9 @@ public class RichDocumentsWebView extends ExternalSiteWebView {
             setThumbnail(file, thumbnail);
             fileName.setText(file.getFileName());
         }
-
-        webview.addJavascriptInterface(new RichDocumentsMobileInterface(), "RichDocumentsMobileInterface");
-
-        webview.setWebChromeClient(new WebChromeClient() {
-            RichDocumentsWebView activity = RichDocumentsWebView.this;
-
-            @Override
-            public boolean onShowFileChooser(WebView webView, ValueCallback<Uri[]> filePathCallback,
-                                             FileChooserParams fileChooserParams) {
-                if (uploadMessage != null) {
-                    uploadMessage.onReceiveValue(null);
-                    uploadMessage = null;
-                }
-
-                activity.uploadMessage = filePathCallback;
-
-                Intent intent = fileChooserParams.createIntent();
-                intent.setType("image/*");
-                intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP);
-                try {
-                    activity.startActivityForResult(intent, REQUEST_LOCAL_FILE);
-                } catch (ActivityNotFoundException e) {
-                    uploadMessage = null;
-                    Toast.makeText(getBaseContext(), "Cannot open file chooser", Toast.LENGTH_LONG).show();
-                    return false;
-                }
-
-                return true;
-            }
-        });
-
-        // load url in background
-        url = getIntent().getStringExtra(EXTRA_URL);
-        if (TextUtils.isEmpty(url)) {
-            new LoadUrlTask(this, getAccount()).execute(file.getLocalId());
-        } else {
-            webview.loadUrl(url);
-        }
     }
 
-    private void setThumbnail(OCFile file, ImageView thumbnailView) {
-        // Todo minimize: only icon by mimetype
 
-        if (file.isFolder()) {
-            thumbnailView.setImageDrawable(MimeTypeUtil.getFolderTypeIcon(file.isSharedWithMe() ||
-                                                                              file.isSharedWithSharee(), file.isSharedViaLink(), file.isEncrypted(), file.getMountType(),
-                                                                          this));
-        } else {
-            if ((MimeTypeUtil.isImage(file) || MimeTypeUtil.isVideo(file)) && file.getRemoteId() != null) {
-                // Thumbnail in cache?
-                Bitmap thumbnail = ThumbnailsCacheManager.getBitmapFromDiskCache(
-                    ThumbnailsCacheManager.PREFIX_THUMBNAIL + file.getRemoteId());
-
-                if (thumbnail != null && !file.isUpdateThumbnailNeeded()) {
-                    if (MimeTypeUtil.isVideo(file)) {
-                        Bitmap withOverlay = ThumbnailsCacheManager.addVideoOverlay(thumbnail);
-                        thumbnailView.setImageBitmap(withOverlay);
-                    } else {
-                        thumbnailView.setImageBitmap(thumbnail);
-                    }
-                } else {
-                    // generate new thumbnail
-                    if (ThumbnailsCacheManager.cancelPotentialThumbnailWork(file, thumbnailView)) {
-                        try {
-                            final ThumbnailsCacheManager.ThumbnailGenerationTask task =
-                                new ThumbnailsCacheManager.ThumbnailGenerationTask(thumbnailView,
-                                                                                   getStorageManager(), getAccount());
-
-                            if (thumbnail == null) {
-                                if (MimeTypeUtil.isVideo(file)) {
-                                    thumbnail = ThumbnailsCacheManager.mDefaultVideo;
-                                } else {
-                                    thumbnail = ThumbnailsCacheManager.mDefaultImg;
-                                }
-                            }
-                            final ThumbnailsCacheManager.AsyncThumbnailDrawable asyncDrawable =
-                                new ThumbnailsCacheManager.AsyncThumbnailDrawable(getResources(), thumbnail, task);
-                            thumbnailView.setImageDrawable(asyncDrawable);
-                            task.execute(new ThumbnailsCacheManager.ThumbnailGenerationTaskObject(file,
-                                                                                                  file.getRemoteId()));
-                        } catch (IllegalArgumentException e) {
-                            Log_OC.d(TAG, "ThumbnailGenerationTask : " + e.getMessage());
-                        }
-                    }
-                }
-
-                if ("image/png".equalsIgnoreCase(file.getMimeType())) {
-                    thumbnailView.setBackgroundColor(getResources().getColor(R.color.bg_default));
-                }
-            } else {
-                thumbnailView.setImageDrawable(MimeTypeUtil.getFileTypeIcon(file.getMimeType(), file.getFileName(),
-                                                                            getAccount(), this));
-            }
-        }
-    }
 
     @Override
     protected void onNewIntent(Intent intent) {
@@ -268,13 +189,6 @@ public class RichDocumentsWebView extends ExternalSiteWebView {
         Intent action = new Intent(this, FilePickerActivity.class);
         action.putExtra(OCFileListFragment.ARG_MIMETYPE, "image/");
         startActivityForResult(action, REQUEST_REMOTE_FILE);
-    }
-
-    private void openShareDialog() {
-        Intent intent = new Intent(this, ShareActivity.class);
-        intent.putExtra(FileActivity.EXTRA_FILE, file);
-        intent.putExtra(FileActivity.EXTRA_ACCOUNT, getAccount());
-        startActivity(intent);
     }
 
     @Override
@@ -349,22 +263,6 @@ public class RichDocumentsWebView extends ExternalSiteWebView {
         super.onDestroy();
     }
 
-    public void closeView() {
-        webview.destroy();
-        finish();
-    }
-
-    private void hideLoading() {
-        thumbnail.setVisibility(View.GONE);
-        fileName.setVisibility(View.GONE);
-        progressBar.setVisibility(View.GONE);
-        webview.setVisibility(View.VISIBLE);
-
-        if (loadingSnackbar != null) {
-            loadingSnackbar.dismiss();
-        }
-    }
-
     @Override
     protected void onResume() {
         super.onResume();
@@ -401,25 +299,15 @@ public class RichDocumentsWebView extends ExternalSiteWebView {
         downloadmanager.enqueue(request);
     }
 
-    private class RichDocumentsMobileInterface {
-        @JavascriptInterface
-        public void close() {
-            runOnUiThread(RichDocumentsWebView.this::closeView);
-        }
-
+    private class RichDocumentsMobileInterface extends MobileInterface {
         @JavascriptInterface
         public void insertGraphic() {
             openFileChooser();
         }
 
         @JavascriptInterface
-        public void share() {
-            openShareDialog();
-        }
-
-        @JavascriptInterface
         public void documentLoaded() {
-            runOnUiThread(RichDocumentsWebView.this::hideLoading);
+            runOnUiThread(RichDocumentsEditorWebView.this::hideLoading);
         }
 
         @JavascriptInterface
@@ -438,8 +326,6 @@ public class RichDocumentsWebView extends ExternalSiteWebView {
                 Log_OC.e(this, "Failed to parse download json message: " + e);
                 return;
             }
-
-
         }
 
         @JavascriptInterface
@@ -464,6 +350,4 @@ public class RichDocumentsWebView extends ExternalSiteWebView {
             }
         }
     }
-
-
 }
