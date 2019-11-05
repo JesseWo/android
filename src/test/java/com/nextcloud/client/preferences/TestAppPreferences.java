@@ -11,9 +11,15 @@ import org.junit.runner.RunWith;
 import org.junit.runners.Suite;
 import org.mockito.InOrder;
 import org.mockito.Mock;
-import static org.mockito.Mockito.*;
-
 import org.mockito.MockitoAnnotations;
+
+import static org.mockito.Mockito.anyBoolean;
+import static org.mockito.Mockito.anyString;
+import static org.mockito.Mockito.doAnswer;
+import static org.mockito.Mockito.inOrder;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 @RunWith(Suite.class)
 @Suite.SuiteClasses({
@@ -64,21 +70,21 @@ public class TestAppPreferences {
                 registry.remove(listener2);
                 registry.remove(listener3);
                 return null;
-            }).when(listener2).onDarkThemeEnabledChanged(anyBoolean());
+            }).when(listener2).onDarkThemeModeChanged(anyBoolean());
 
             // WHEN
             //      callback is called twice
-            registry.onSharedPreferenceChanged(NOT_USED_NULL, AppPreferencesImpl.PREF__DARK_THEME_ENABLED);
-            registry.onSharedPreferenceChanged(NOT_USED_NULL, AppPreferencesImpl.PREF__DARK_THEME_ENABLED);
+            registry.onSharedPreferenceChanged(NOT_USED_NULL, AppPreferencesImpl.PREF__DARK_THEME);
+            registry.onSharedPreferenceChanged(NOT_USED_NULL, AppPreferencesImpl.PREF__DARK_THEME);
 
             // THEN
             //      no ConcurrentModificationException
             //      1st time, all listeners (including removed) are called
             //      2nd time removed callbacks are not called
-            verify(listener1, times(2)).onDarkThemeEnabledChanged(anyBoolean());
-            verify(listener2).onDarkThemeEnabledChanged(anyBoolean());
-            verify(listener3).onDarkThemeEnabledChanged(anyBoolean());
-            verify(listener4, times(2)).onDarkThemeEnabledChanged(anyBoolean());
+            verify(listener1, times(2)).onDarkThemeModeChanged(anyBoolean());
+            verify(listener2).onDarkThemeModeChanged(anyBoolean());
+            verify(listener3).onDarkThemeModeChanged(anyBoolean());
+            verify(listener4, times(2)).onDarkThemeModeChanged(anyBoolean());
         }
 
         @Test
@@ -90,7 +96,7 @@ public class TestAppPreferences {
 
             // WHEN
             //      callback is called
-            registry.onSharedPreferenceChanged(NOT_USED_NULL, AppPreferencesImpl.PREF__DARK_THEME_ENABLED);
+            registry.onSharedPreferenceChanged(NOT_USED_NULL, AppPreferencesImpl.PREF__DARK_THEME);
 
             // THEN
             //      nothing happens

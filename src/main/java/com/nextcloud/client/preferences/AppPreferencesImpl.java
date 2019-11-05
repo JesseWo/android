@@ -21,7 +21,6 @@
 
 package com.nextcloud.client.preferences;
 
-import android.accounts.Account;
 import android.annotation.SuppressLint;
 import android.content.Context;
 import android.content.SharedPreferences;
@@ -79,7 +78,7 @@ public final class AppPreferencesImpl implements AppPreferences {
     private static final String PREF__AUTO_UPLOAD_INIT = "autoUploadInit";
     private static final String PREF__FOLDER_SORT_ORDER = "folder_sort_order";
     private static final String PREF__FOLDER_LAYOUT = "folder_layout";
-    static final String PREF__DARK_THEME_ENABLED = "dark_theme_enabled";
+    private static final String PREF__DARK_THEME = "dark_theme_mode";
 
     private static final String PREF__LOCK_TIMESTAMP = "lock_timestamp";
     private static final String PREF__SHOW_MEDIA_SCAN_NOTIFICATIONS = "show_media_scan_notifications";
@@ -121,10 +120,10 @@ public final class AppPreferencesImpl implements AppPreferences {
 
         @Override
         public void onSharedPreferenceChanged(SharedPreferences sharedPreferences, String key) {
-            if(PREF__DARK_THEME_ENABLED.equals(key)) {
-                boolean enabled = preferences.isDarkThemeEnabled();
+            if (PREF__DARK_THEME.equals(key)) {
+                DarkMode mode = preferences.getDarkThemeMode();
                 for(Listener l : listeners) {
-                    l.onDarkThemeEnabledChanged(enabled);
+                    l.onDarkThemeModeChanged(mode);
                 }
             }
         }
@@ -408,13 +407,18 @@ public final class AppPreferencesImpl implements AppPreferences {
     }
 
     @Override
-    public void setDarkThemeEnabled(boolean enabled) {
-        preferences.edit().putBoolean(PREF__DARK_THEME_ENABLED, enabled).apply();
+    public void setDarkThemeMode(DarkMode mode) {
+        preferences.edit().putString(PREF__DARK_THEME, mode.name()).apply();
     }
 
     @Override
-    public boolean isDarkThemeEnabled() {
-        return preferences.getBoolean(PREF__DARK_THEME_ENABLED, false);
+    public DarkMode getDarkThemeMode() {
+        try {
+            return DarkMode.valueOf(preferences.getString(PREF__DARK_THEME, DarkMode.LIGHT.name()));
+        } catch (ClassCastException e) {
+            preferences.edit().putString(PREF__DARK_THEME, DarkMode.LIGHT.name()).commit();
+            return DarkMode.DARK;
+        }
     }
 
     @Override

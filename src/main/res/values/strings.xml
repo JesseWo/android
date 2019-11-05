@@ -907,4 +907,7 @@
     <string name="folder">folder</string>
     <string name="file">file</string>
     <string name="share_internal_link">Share internal link</string>
+    <string name="dark_mode_light">light</string>
+    <string name="dark_mode_dark">dark</string>
+    <string name="dark_mode_system">follow system</string>
 </resources>
