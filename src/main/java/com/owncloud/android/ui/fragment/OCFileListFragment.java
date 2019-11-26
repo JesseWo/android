@@ -58,6 +58,7 @@ import com.owncloud.android.datamodel.FileDataStorageManager;
 import com.owncloud.android.datamodel.OCFile;
 import com.owncloud.android.datamodel.VirtualFolderType;
 import com.owncloud.android.files.FileMenuFilter;
+import com.owncloud.android.lib.common.Creator;
 import com.owncloud.android.lib.common.OwnCloudAccount;
 import com.owncloud.android.lib.common.OwnCloudClient;
 import com.owncloud.android.lib.common.OwnCloudClientManagerFactory;
@@ -77,6 +78,7 @@ import com.owncloud.android.ui.activity.RichDocumentsEditorWebView;
 import com.owncloud.android.ui.activity.ToolbarActivity;
 import com.owncloud.android.ui.activity.UploadFilesActivity;
 import com.owncloud.android.ui.adapter.OCFileListAdapter;
+import com.owncloud.android.ui.dialog.ChooseRichDocumentsTemplateDialogFragment;
 import com.owncloud.android.ui.dialog.ChooseTemplateDialogFragment;
 import com.owncloud.android.ui.dialog.ConfirmationDialogFragment;
 import com.owncloud.android.ui.dialog.CreateFolderDialogFragment;
@@ -400,9 +402,11 @@ public class OCFileListFragment extends ExtendedListFragment implements
      */
     private void registerFabListener() {
         FileActivity activity = (FileActivity) getActivity();
-        getFabMain().setOnClickListener(v -> {
-            new OCFileListBottomSheetDialog(activity, this, deviceInfo).show();
-        });
+        getFabMain().setOnClickListener(v -> new OCFileListBottomSheetDialog(activity,
+                                                                             this,
+                                                                             deviceInfo,
+                                                                             accountManager.getUser())
+            .show());
     }
 
     @Override
@@ -488,20 +492,29 @@ public class OCFileListFragment extends ExtendedListFragment implements
 
     @Override
     public void newDocument() {
-        ChooseTemplateDialogFragment.newInstance(mFile, ChooseTemplateDialogFragment.Type.DOCUMENT)
+        ChooseRichDocumentsTemplateDialogFragment.newInstance(mFile,
+                                                              ChooseRichDocumentsTemplateDialogFragment.Type.DOCUMENT)
                 .show(requireActivity().getSupportFragmentManager(), DIALOG_CREATE_DOCUMENT);
     }
 
     @Override
     public void newSpreadsheet() {
-        ChooseTemplateDialogFragment.newInstance(mFile, ChooseTemplateDialogFragment.Type.SPREADSHEET)
+        ChooseRichDocumentsTemplateDialogFragment.newInstance(mFile,
+                                                              ChooseRichDocumentsTemplateDialogFragment.Type.SPREADSHEET)
                 .show(requireActivity().getSupportFragmentManager(), DIALOG_CREATE_DOCUMENT);
     }
 
     @Override
     public void newPresentation() {
-        ChooseTemplateDialogFragment.newInstance(mFile, ChooseTemplateDialogFragment.Type.PRESENTATION)
+        ChooseRichDocumentsTemplateDialogFragment.newInstance(mFile,
+                                                              ChooseRichDocumentsTemplateDialogFragment.Type.PRESENTATION)
                 .show(requireActivity().getSupportFragmentManager(), DIALOG_CREATE_DOCUMENT);
+    }
+
+    @Override
+    public void showTemplate(Creator creator) {
+        ChooseTemplateDialogFragment.newInstance(mFile, creator).show(requireActivity().getSupportFragmentManager(),
+                                                                      DIALOG_CREATE_DOCUMENT);
     }
 
     /**
