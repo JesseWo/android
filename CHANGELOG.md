@@ -1,3 +1,4 @@
+
 3.9.0 (November, 12, 2019)
 
 - preview Markdown with syntax highlighting @AndyScherzinger
