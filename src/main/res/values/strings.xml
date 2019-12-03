@@ -58,6 +58,7 @@
     <string name="prefs_imprint">Imprint</string>
     <string name="prefs_value_theme_light">Light</string>
     <string name="prefs_value_theme_dark">Dark</string>
+    <string name="prefs_value_theme_system">Follow system</string>
     <string name="prefs_theme_title">Theme</string>
 
 
@@ -907,7 +908,4 @@
     <string name="folder">folder</string>
     <string name="file">file</string>
     <string name="share_internal_link">Share internal link</string>
-    <string name="dark_mode_light">light</string>
-    <string name="dark_mode_dark">dark</string>
-    <string name="dark_mode_system">follow system</string>
 </resources>

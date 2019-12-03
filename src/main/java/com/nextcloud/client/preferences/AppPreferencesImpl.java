@@ -416,7 +416,7 @@ public final class AppPreferencesImpl implements AppPreferences {
         try {
             return DarkMode.valueOf(preferences.getString(PREF__DARK_THEME, DarkMode.LIGHT.name()));
         } catch (ClassCastException e) {
-            preferences.edit().putString(PREF__DARK_THEME, DarkMode.LIGHT.name()).commit();
+            preferences.edit().putString(PREF__DARK_THEME, DarkMode.LIGHT.name()).apply();
             return DarkMode.DARK;
         }
     }

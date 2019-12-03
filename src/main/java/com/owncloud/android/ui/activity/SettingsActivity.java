@@ -698,17 +698,17 @@ public class SettingsActivity extends ThemedPreferenceActivity
         ListPreference themePref = (ListPreference) findPreference("darkTheme");
 
         List<String> themeEntries = new ArrayList<>(3);
-        themeEntries.add(getString(R.string.dark_mode_light));
-        themeEntries.add(getString(R.string.dark_mode_dark));
-        themeEntries.add(getString(R.string.dark_mode_system));
+        themeEntries.add(getString(R.string.prefs_value_theme_light));
+        themeEntries.add(getString(R.string.prefs_value_theme_dark));
+        themeEntries.add(getString(R.string.prefs_value_theme_system));
 
         List<String> themeValues = new ArrayList<>(3);
         themeValues.add(DarkMode.LIGHT.name());
         themeValues.add(DarkMode.DARK.name());
         themeValues.add(DarkMode.SYSTEM.name());
 
-        themePref.setEntries(themeEntries.toArray(new String[3]));
-        themePref.setEntryValues(themeValues.toArray(new String[3]));
+        themePref.setEntries(themeEntries.toArray(new String[0]));
+        themePref.setEntryValues(themeValues.toArray(new String[0]));
         themePref.setSummary(themePref.getEntry().length() == 0 ? DarkMode.LIGHT.name() : themePref.getEntry());
 
         themePref.setOnPreferenceChangeListener((preference, newValue) -> {
