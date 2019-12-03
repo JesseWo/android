@@ -13,7 +13,6 @@ import org.mockito.InOrder;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 
-import static org.mockito.Mockito.anyBoolean;
 import static org.mockito.Mockito.anyString;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.inOrder;
@@ -51,7 +50,7 @@ public class TestAppPreferences {
         @Before
         public void setUp() {
             MockitoAnnotations.initMocks(this);
-            when(appPreferences.isDarkThemeEnabled()).thenReturn(true);
+            when(appPreferences.getDarkThemeMode()).thenReturn(DarkMode.DARK);
             registry = new AppPreferencesImpl.ListenerRegistry(appPreferences);
         }
 
@@ -70,7 +69,7 @@ public class TestAppPreferences {
                 registry.remove(listener2);
                 registry.remove(listener3);
                 return null;
-            }).when(listener2).onDarkThemeModeChanged(anyBoolean());
+            }).when(listener2).onDarkThemeModeChanged(DarkMode.DARK);
 
             // WHEN
             //      callback is called twice
@@ -81,10 +80,10 @@ public class TestAppPreferences {
             //      no ConcurrentModificationException
             //      1st time, all listeners (including removed) are called
             //      2nd time removed callbacks are not called
-            verify(listener1, times(2)).onDarkThemeModeChanged(anyBoolean());
-            verify(listener2).onDarkThemeModeChanged(anyBoolean());
-            verify(listener3).onDarkThemeModeChanged(anyBoolean());
-            verify(listener4, times(2)).onDarkThemeModeChanged(anyBoolean());
+            verify(listener1, times(2)).onDarkThemeModeChanged(DarkMode.DARK);
+            verify(listener2).onDarkThemeModeChanged(DarkMode.DARK);
+            verify(listener3).onDarkThemeModeChanged(DarkMode.DARK);
+            verify(listener4, times(2)).onDarkThemeModeChanged(DarkMode.DARK);
         }
 
         @Test

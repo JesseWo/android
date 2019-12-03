@@ -56,6 +56,7 @@ public final class AppPreferencesImpl implements AppPreferences {
      */
     public static final String AUTO_PREF__LAST_SEEN_VERSION_CODE = "lastSeenVersionCode";
     public static final String STORAGE_PATH = "storage_path";
+    public static final String PREF__DARK_THEME = "dark_theme_mode";
     public static final float DEFAULT_GRID_COLUMN = 4.0f;
 
     private static final String AUTO_PREF__LAST_UPLOAD_PATH = "last_upload_path";
@@ -78,7 +79,6 @@ public final class AppPreferencesImpl implements AppPreferences {
     private static final String PREF__AUTO_UPLOAD_INIT = "autoUploadInit";
     private static final String PREF__FOLDER_SORT_ORDER = "folder_sort_order";
     private static final String PREF__FOLDER_LAYOUT = "folder_layout";
-    private static final String PREF__DARK_THEME = "dark_theme_mode";
 
     private static final String PREF__LOCK_TIMESTAMP = "lock_timestamp";
     private static final String PREF__SHOW_MEDIA_SCAN_NOTIFICATIONS = "show_media_scan_notifications";
