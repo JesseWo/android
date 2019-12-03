@@ -176,47 +176,6 @@ class TestPowerManagementService {
         }
 
         @Test
-        fun `battery charging status on API 14-16`() {
-            // GIVEN
-            //      device has API level 16 or below
-            //      battery status sticky intent is available
-            whenever(deviceInfo.apiLevel).thenReturn(Build.VERSION_CODES.JELLY_BEAN)
-            val powerSources = setOf(
-                BatteryManager.BATTERY_PLUGGED_AC,
-                BatteryManager.BATTERY_PLUGGED_USB
-            )
-
-            for (row in powerSources) {
-                // WHEN
-                //      device is charging using AC or USB
-                whenever(mockStickyBatteryStatusIntent.getIntExtra(eq(BatteryManager.EXTRA_PLUGGED), any()))
-                    .thenReturn(row)
-
-                // THEN
-                //      charging flag is true
-                assertTrue(powerManagementService.isBatteryCharging)
-            }
-        }
-
-        @Test
-        fun `wireless charging is not supported in API 14-16`() {
-            // GIVEN
-            //      device has API level 16 or below
-            //      battery status sticky intent is available
-            whenever(deviceInfo.apiLevel).thenReturn(Build.VERSION_CODES.JELLY_BEAN)
-
-            // WHEN
-            //      spurious wireless power source is returned
-            whenever(mockStickyBatteryStatusIntent.getIntExtra(eq(BatteryManager.EXTRA_PLUGGED), any()))
-                .thenReturn(BatteryManager.BATTERY_PLUGGED_WIRELESS)
-
-            // THEN
-            //      power source value is ignored on this API level
-            //      charging flag is false
-            assertFalse(powerManagementService.isBatteryCharging)
-        }
-
-        @Test
         fun `battery status sticky intent is not available`() {
             // GIVEN
             //      device has API level P or below
