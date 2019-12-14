@@ -1,0 +1,3 @@
+[submodule "nextcloud-android-library"]
+	path = nextcloud-android-library
+	url = git@github.com:JesseWo/android-library.git
