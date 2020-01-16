@@ -25,8 +25,9 @@ buildscript {
         }
         classpath 'gradle.plugin.com.github.spotbugs:spotbugs-gradle-plugin:1.6.6'
         classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
-        classpath "io.gitlab.arturbosch.detekt:detekt-gradle-plugin:1.2.2"
+        classpath "io.gitlab.arturbosch.detekt:detekt-gradle-plugin:1.3.0"
         classpath "commons-httpclient:commons-httpclient:3.1@jar" // remove after entire switch to lib v2
+        classpath 'com.karumi:shot:3.1.0'
     }
 }
 
@@ -38,8 +39,9 @@ apply plugin: 'kotlin-kapt'
 apply plugin: 'checkstyle'
 apply plugin: 'pmd'
 apply plugin: 'jacoco-android'
-apply plugin: "com.github.spotbugs"
-apply plugin: "io.gitlab.arturbosch.detekt"
+apply plugin: 'com.github.spotbugs'
+apply plugin: 'io.gitlab.arturbosch.detekt'
+apply plugin: 'shot'
 
 configurations {
     ktlint
@@ -57,7 +59,7 @@ configurations {
 
 ext {
     jacocoVersion = "0.8.2"
-    daggerVersion = "2.25.2"
+    daggerVersion = "2.25.4"
     markwonVersion =  "4.2.0"
     prismVersion = "2.0.0"
     androidLibraryVersion = "master-SNAPSHOT"
@@ -81,7 +83,7 @@ repositories {
 
 // semantic versioning for version code
 def versionMajor = 3
-def versionMinor = 10
+def versionMinor = 11
 def versionPatch = 0
 def versionBuild = 0 // 0-50=Alpha / 51-98=RC / 90-99=stable
 
@@ -98,6 +100,11 @@ for (TaskExecutionRequest tr : getGradle().getStartParameter().getTaskRequests()
 
 spotbugs {
     toolVersion = '3.1.12'
+}
+
+shot {
+    appId = 'com.nextcloud.client'
+    instrumentationTestTask = 'connectedGenericDebugAndroidTest'
 }
 
 android {
@@ -125,7 +132,7 @@ android {
         targetSdkVersion 29
 
         // arguments to be passed to functional tests
-        testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
+        testInstrumentationRunner "com.nextcloud.client.ScreenshotTestRunner"
         testInstrumentationRunnerArgument "TEST_SERVER_URL", "${NC_TEST_SERVER_BASEURL}"
         testInstrumentationRunnerArgument "TEST_SERVER_USERNAME", "${NC_TEST_SERVER_USERNAME}"
         testInstrumentationRunnerArgument "TEST_SERVER_PASSWORD", "${NC_TEST_SERVER_PASSWORD}"
@@ -169,8 +176,8 @@ android {
             versionDev {
                 applicationId "com.nextcloud.android.beta"
                 dimension "default"
-                versionCode 20191213
-                versionName "20191213"
+                versionCode 20200115
+                versionName "20200115"
             }
 
             qa {
@@ -280,7 +287,7 @@ dependencies {
     implementation 'org.apache.jackrabbit:jackrabbit-webdav:2.13.1' // remove after entire switch to lib v2
     implementation 'androidx.constraintlayout:constraintlayout:1.1.3'
     implementation 'androidx.legacy:legacy-support-v4:1.0.0'
-    implementation 'com.google.android.material:material:1.1.0-beta01'
+    implementation 'com.google.android.material:material:1.1.0-beta02'
     implementation 'com.jakewharton:disklrucache:2.0.2'
     implementation 'androidx.appcompat:appcompat:1.1.0'
     implementation 'androidx.cardview:cardview:1.0.0'
@@ -292,8 +299,8 @@ dependencies {
     compileOnly 'com.google.code.findbugs:annotations:2.0.1'
     implementation 'commons-io:commons-io:2.6'
     implementation 'com.github.tobiaskaminsky:android-job:v1.2.6.1' // 'com.github.evernote:android-job:v1.2.5'
-    implementation 'com.jakewharton:butterknife:10.2.0'
-    kapt 'com.jakewharton:butterknife-compiler:10.2.0'
+    implementation 'com.jakewharton:butterknife:10.2.1'
+    kapt 'com.jakewharton:butterknife-compiler:10.2.1'
     implementation 'org.greenrobot:eventbus:3.1.1'
     implementation 'com.googlecode.ez-vcard:ez-vcard:0.10.5'
     implementation 'org.lukhnos:nnio:0.2'
@@ -342,8 +349,8 @@ dependencies {
     kapt "io.noties:prism4j-bundler:$prismVersion"
 
     // dependencies for local unit tests
-    testImplementation 'junit:junit:4.12'
-    testImplementation 'org.mockito:mockito-core:3.2.0'
+    testImplementation 'junit:junit:4.13'
+    testImplementation 'org.mockito:mockito-core:3.2.4'
     testImplementation 'androidx.test:core:1.2.0'
     testImplementation 'org.powermock:powermock-core:2.0.4'
     testImplementation 'org.powermock:powermock-module-junit4:2.0.4'
@@ -363,13 +370,14 @@ dependencies {
     // Espresso core
     androidTestImplementation 'androidx.test.espresso:espresso-core:3.2.0'
     androidTestImplementation 'androidx.test.espresso:espresso-contrib:3.2.0'
-    androidTestImplementation 'org.mockito:mockito-core:3.1.0'
+    androidTestImplementation 'org.mockito:mockito-core:3.2.4'
     // UIAutomator - for cross-app UI tests, and to grant screen is turned on in Espresso tests
     // androidTestImplementation 'androidx.test.uiautomator:uiautomator:2.2.0'
     // fix conflict in dependencies; see http://g.co/androidstudio/app-test-app-conflict for details
     //androidTestImplementation "com.android.support:support-annotations:${supportLibraryVersion}"
-    androidTestImplementation 'tools.fastlane:screengrab:1.2.0'
+    androidTestImplementation 'tools.fastlane:screengrab:2.0.0'
     implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk7:$kotlin_version"
+    androidTestCompile('com.android.support.test.espresso:espresso-intents:3.0.2')
 
 //    jacocoAnt "org.jacoco:org.jacoco.ant:${jacocoVersion}"
 //    jacocoAgent "org.jacoco:org.jacoco.agent:${jacocoVersion}"

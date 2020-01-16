@@ -695,7 +695,7 @@ public class SettingsActivity extends ThemedPreferenceActivity
 
         loadStoragePath();
 
-        ListPreference themePref = (ListPreference) findPreference("darkTheme");
+        ListPreference themePref = (ListPreference) findPreference("darkMode");
 
         List<String> themeEntries = new ArrayList<>(3);
         themeEntries.add(getString(R.string.prefs_value_theme_light));
@@ -711,8 +711,8 @@ public class SettingsActivity extends ThemedPreferenceActivity
         themePref.setEntryValues(themeValues.toArray(new String[0]));
 
         if (TextUtils.isEmpty(themePref.getEntry())) {
-            themePref.setValue(DarkMode.LIGHT.name());
-            themePref.setSummary(TextUtils.isEmpty(themePref.getEntry()) ? DarkMode.LIGHT.name() : themePref.getEntry());
+            themePref.setValue(DarkMode.SYSTEM.name());
+            themePref.setSummary(TextUtils.isEmpty(themePref.getEntry()) ? DarkMode.SYSTEM.name() : themePref.getEntry());
         }
 
         themePref.setOnPreferenceChangeListener((preference, newValue) -> {
@@ -751,7 +751,7 @@ public class SettingsActivity extends ThemedPreferenceActivity
             actionBar.setBackgroundDrawable(new ColorDrawable(ThemeUtils.primaryColor(this)));
 
             Drawable backArrow = getResources().getDrawable(R.drawable.ic_arrow_back);
-            actionBar.setHomeAsUpIndicator(ThemeUtils.tintDrawable(backArrow, ThemeUtils.fontColor(this)));
+            actionBar.setHomeAsUpIndicator(ThemeUtils.tintDrawable(backArrow, ThemeUtils.fontColor(this, true)));
         }
 
         Window window = getWindow();

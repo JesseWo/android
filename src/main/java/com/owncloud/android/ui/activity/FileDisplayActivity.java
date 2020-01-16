@@ -113,7 +113,9 @@ import com.owncloud.android.ui.helpers.UriUploader;
 import com.owncloud.android.ui.preview.PreviewImageActivity;
 import com.owncloud.android.ui.preview.PreviewImageFragment;
 import com.owncloud.android.ui.preview.PreviewMediaFragment;
+import com.owncloud.android.ui.preview.PreviewTextFileFragment;
 import com.owncloud.android.ui.preview.PreviewTextFragment;
+import com.owncloud.android.ui.preview.PreviewTextStringFragment;
 import com.owncloud.android.ui.preview.PreviewVideoActivity;
 import com.owncloud.android.utils.DataHolderUtil;
 import com.owncloud.android.utils.DisplayUtils;
@@ -478,7 +480,7 @@ public class FileDisplayActivity extends FileActivity
                     cleanSecondFragment();
                     if (file.isDown() && MimeTypeUtil.isVCard(file.getMimeType())) {
                         startContactListFragment(file);
-                    } else if (file.isDown() && PreviewTextFragment.canBePreviewed(file)) {
+                    } else if (file.isDown() && PreviewTextFileFragment.canBePreviewed(file)) {
                         startTextPreview(file, false);
                     }
                 }
@@ -597,7 +599,7 @@ public class FileDisplayActivity extends FileActivity
                 int startPlaybackPosition = getIntent().getIntExtra(PreviewVideoActivity.EXTRA_START_POSITION, 0);
                 boolean autoplay = getIntent().getBooleanExtra(PreviewVideoActivity.EXTRA_AUTOPLAY, true);
                 secondFragment = PreviewMediaFragment.newInstance(file, getAccount(), startPlaybackPosition, autoplay);
-            } else if (file.isDown() && PreviewTextFragment.canBePreviewed(file)) {
+            } else if (file.isDown() && PreviewTextFileFragment.canBePreviewed(file)) {
                 secondFragment = null;
             } else {
                 secondFragment = FileDetailFragment.newInstance(file, getAccount());
@@ -739,7 +741,7 @@ public class FileDisplayActivity extends FileActivity
                         } else if (MimeTypeUtil.isVCard(mWaitingToPreview.getMimeType())) {
                             startContactListFragment(mWaitingToPreview);
                             detailsFragmentChanged = true;
-                        } else if (PreviewTextFragment.canBePreviewed(mWaitingToPreview)) {
+                        } else if (PreviewTextFileFragment.canBePreviewed(mWaitingToPreview)) {
                             startTextPreview(mWaitingToPreview, true);
                             detailsFragmentChanged = true;
                         } else {
@@ -1504,7 +1506,7 @@ public class FileDisplayActivity extends FileActivity
                         OCFile ocFile = getFile();
                         if (PreviewImageFragment.canBePreviewed(ocFile)) {
                             startImagePreview(getFile(), true);
-                        } else if (PreviewTextFragment.canBePreviewed(ocFile)) {
+                        } else if (PreviewTextFileFragment.canBePreviewed(ocFile)) {
                             startTextPreview(ocFile, true);
                         }
                         // TODO what about other kind of previews?
@@ -1778,7 +1780,7 @@ public class FileDisplayActivity extends FileActivity
                     ((PreviewMediaFragment) details).updateFile(file);
                 } else if (details instanceof PreviewTextFragment) {
                     // Refresh  OCFile of the fragment
-                    ((PreviewTextFragment) details).updateFile(file);
+                    ((PreviewTextFileFragment) details).updateFile(file);
                 } else {
                     showDetails(file);
                 }
@@ -2060,8 +2062,8 @@ public class FileDisplayActivity extends FileActivity
                     }
                 } else if (details instanceof PreviewTextFragment &&
                         renamedFile.equals(details.getFile())) {
-                    ((PreviewTextFragment) details).updateFile(renamedFile);
-                    if (PreviewTextFragment.canBePreviewed(renamedFile)) {
+                    ((PreviewTextFileFragment) details).updateFile(renamedFile);
+                    if (PreviewTextFileFragment.canBePreviewed(renamedFile)) {
                         startTextPreview(renamedFile, true);
                     } else {
                         getFileOperationsHelper().openFile(renamedFile);
@@ -2369,7 +2371,7 @@ public class FileDisplayActivity extends FileActivity
             args.putBoolean(EXTRA_SEARCH, searchOpen);
             args.putString(EXTRA_SEARCH_QUERY, searchQuery);
             Fragment textPreviewFragment = Fragment.instantiate(getApplicationContext(),
-                    PreviewTextFragment.class.getName(), args);
+                                                                PreviewTextFileFragment.class.getName(), args);
             setSecondFragment(textPreviewFragment);
             updateFragmentsVisibility(true);
             updateActionBarTitleAndHomeButton(file);
@@ -2383,6 +2385,23 @@ public class FileDisplayActivity extends FileActivity
                                                                                  connectivityService);
             fileOperationsHelper.startSyncForFileAndIntent(file, previewIntent);
         }
+    }
+
+    /**
+     * Stars rich workspace preview for a folder.
+     *
+     * @param folder {@link OCFile} to preview its rich workspace.
+     */
+    public void startRichWorkspacePreview(OCFile folder) {
+        Bundle args = new Bundle();
+        args.putParcelable(EXTRA_FILE, folder);
+        Fragment textPreviewFragment = Fragment.instantiate(getApplicationContext(),
+                                                            PreviewTextStringFragment.class.getName(),
+                                                            args);
+        setSecondFragment(textPreviewFragment);
+        updateFragmentsVisibility(true);
+        updateActionBarTitleAndHomeButton(folder);
+        setFile(folder);
     }
 
     public void startContactListFragment(OCFile file) {
@@ -2539,8 +2558,9 @@ public class FileDisplayActivity extends FileActivity
     @Override
     public void onStart() {
         super.onStart();
-        Optional<User> optionalUser = getUser();
-        if (optionalUser.isPresent()) {
+        final Optional<User> optionalUser = getUser();
+        final FileDataStorageManager storageManager = getStorageManager();
+        if (optionalUser.isPresent() && storageManager != null) {
             /// Check whether the 'main' OCFile handled by the Activity is contained in the
             // current Account
             OCFile file = getFile();
@@ -2552,17 +2572,17 @@ public class FileDisplayActivity extends FileActivity
                     // cache until the upload is successful get parent from path
                     parentPath = file.getRemotePath().substring(0,
                                                                 file.getRemotePath().lastIndexOf(file.getFileName()));
-                    if (getStorageManager().getFileByPath(parentPath) == null) {
+                    if (storageManager.getFileByPath(parentPath) == null) {
                         file = null; // not able to know the directory where the file is uploading
                     }
                 } else {
-                    file = getStorageManager().getFileByPath(file.getRemotePath());
+                    file = storageManager.getFileByPath(file.getRemotePath());
                     // currentDir = null if not in the current Account
                 }
             }
             if (file == null) {
                 // fall back to root folder
-                file = getStorageManager().getFileByPath(OCFile.ROOT_PATH);  // never returns null
+                file = storageManager.getFileByPath(OCFile.ROOT_PATH);  // never returns null
             }
             setFile(file);
 

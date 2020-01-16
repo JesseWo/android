@@ -25,8 +25,6 @@
 package com.owncloud.android.ui.fragment;
 
 import android.accounts.Account;
-import android.accounts.AuthenticatorException;
-import android.accounts.OperationCanceledException;
 import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
@@ -47,6 +45,7 @@ import android.widget.AbsListView;
 import android.widget.PopupMenu;
 
 import com.google.android.material.snackbar.Snackbar;
+import com.nextcloud.android.lib.richWorkspace.RichWorkspaceDirectEditingRemoteOperation;
 import com.nextcloud.client.account.User;
 import com.nextcloud.client.account.UserAccountManager;
 import com.nextcloud.client.device.DeviceInfo;
@@ -60,9 +59,8 @@ import com.owncloud.android.datamodel.FileDataStorageManager;
 import com.owncloud.android.datamodel.OCFile;
 import com.owncloud.android.datamodel.VirtualFolderType;
 import com.owncloud.android.files.FileMenuFilter;
-import com.owncloud.android.lib.common.OwnCloudAccount;
+import com.owncloud.android.lib.common.Creator;
 import com.owncloud.android.lib.common.OwnCloudClient;
-import com.owncloud.android.lib.common.OwnCloudClientManagerFactory;
 import com.owncloud.android.lib.common.operations.RemoteOperation;
 import com.owncloud.android.lib.common.operations.RemoteOperationResult;
 import com.owncloud.android.lib.common.utils.Log_OC;
@@ -75,10 +73,10 @@ import com.owncloud.android.ui.activity.FileActivity;
 import com.owncloud.android.ui.activity.FileDisplayActivity;
 import com.owncloud.android.ui.activity.FolderPickerActivity;
 import com.owncloud.android.ui.activity.OnEnforceableRefreshListener;
-import com.owncloud.android.ui.activity.RichDocumentsWebView;
 import com.owncloud.android.ui.activity.ToolbarActivity;
 import com.owncloud.android.ui.activity.UploadFilesActivity;
 import com.owncloud.android.ui.adapter.OCFileListAdapter;
+import com.owncloud.android.ui.dialog.ChooseRichDocumentsTemplateDialogFragment;
 import com.owncloud.android.ui.dialog.ChooseTemplateDialogFragment;
 import com.owncloud.android.ui.dialog.ConfirmationDialogFragment;
 import com.owncloud.android.ui.dialog.CreateFolderDialogFragment;
@@ -94,7 +92,7 @@ import com.owncloud.android.ui.events.SearchEvent;
 import com.owncloud.android.ui.interfaces.OCFileListFragmentInterface;
 import com.owncloud.android.ui.preview.PreviewImageFragment;
 import com.owncloud.android.ui.preview.PreviewMediaFragment;
-import com.owncloud.android.ui.preview.PreviewTextFragment;
+import com.owncloud.android.ui.preview.PreviewTextFileFragment;
 import com.owncloud.android.utils.DisplayUtils;
 import com.owncloud.android.utils.EncryptionUtils;
 import com.owncloud.android.utils.FileSortOrder;
@@ -108,7 +106,6 @@ import org.greenrobot.eventbus.ThreadMode;
 import org.parceler.Parcels;
 
 import java.io.File;
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
@@ -402,9 +399,11 @@ public class OCFileListFragment extends ExtendedListFragment implements
      */
     private void registerFabListener() {
         FileActivity activity = (FileActivity) getActivity();
-        getFabMain().setOnClickListener(v -> {
-            new OCFileListBottomSheetDialog(activity, this, deviceInfo).show();
-        });
+        getFabMain().setOnClickListener(v -> new OCFileListBottomSheetDialog(activity,
+                                                                             this,
+                                                                             deviceInfo,
+                                                                             accountManager.getUser())
+            .show());
     }
 
     @Override
@@ -476,34 +475,50 @@ public class OCFileListFragment extends ExtendedListFragment implements
                                                Collections.singleton(file),
                                                currentAccount,
                                                mContainerActivity, getActivity(),
-                                               true);
+                                               true,
+                                               deviceInfo,
+                                               accountManager.getUser());
         mf.filter(popup.getMenu(),
                   true,
                   accountManager.isMediaStreamingSupported(currentAccount));
         popup.setOnMenuItemClickListener(item -> {
             Set<OCFile> checkedFiles = new HashSet<>();
             checkedFiles.add(file);
-            return onFileActionChosen(item.getItemId(), checkedFiles);
+            return onFileActionChosen(item, checkedFiles);
         });
         popup.show();
     }
 
     @Override
     public void newDocument() {
-        ChooseTemplateDialogFragment.newInstance(mFile, ChooseTemplateDialogFragment.Type.DOCUMENT)
+        ChooseRichDocumentsTemplateDialogFragment.newInstance(mFile,
+                                                              ChooseRichDocumentsTemplateDialogFragment.Type.DOCUMENT)
                 .show(requireActivity().getSupportFragmentManager(), DIALOG_CREATE_DOCUMENT);
     }
 
     @Override
     public void newSpreadsheet() {
-        ChooseTemplateDialogFragment.newInstance(mFile, ChooseTemplateDialogFragment.Type.SPREADSHEET)
+        ChooseRichDocumentsTemplateDialogFragment.newInstance(mFile,
+                                                              ChooseRichDocumentsTemplateDialogFragment.Type.SPREADSHEET)
                 .show(requireActivity().getSupportFragmentManager(), DIALOG_CREATE_DOCUMENT);
     }
 
     @Override
     public void newPresentation() {
-        ChooseTemplateDialogFragment.newInstance(mFile, ChooseTemplateDialogFragment.Type.PRESENTATION)
+        ChooseRichDocumentsTemplateDialogFragment.newInstance(mFile,
+                                                              ChooseRichDocumentsTemplateDialogFragment.Type.PRESENTATION)
                 .show(requireActivity().getSupportFragmentManager(), DIALOG_CREATE_DOCUMENT);
+    }
+
+    @Override
+    public void onHeaderClicked() {
+        ((FileDisplayActivity) mContainerActivity).startRichWorkspacePreview(getCurrentFile());
+    }
+
+    @Override
+    public void showTemplate(Creator creator) {
+        ChooseTemplateDialogFragment.newInstance(mFile, creator).show(requireActivity().getSupportFragmentManager(),
+                                                                      DIALOG_CREATE_DOCUMENT);
     }
 
     /**
@@ -615,12 +630,14 @@ public class OCFileListFragment extends ExtendedListFragment implements
             mode.setTitle(title);
             Account currentAccount = ((FileActivity) getActivity()).getAccount();
             FileMenuFilter mf = new FileMenuFilter(
-                    mAdapter.getFiles().size(),
-                    checkedFiles,
-                    currentAccount,
-                    mContainerActivity,
-                    getActivity(),
-                    false
+                mAdapter.getFiles().size(),
+                checkedFiles,
+                currentAccount,
+                mContainerActivity,
+                getActivity(),
+                false,
+                deviceInfo,
+                accountManager.getUser()
             );
 
             mf.filter(menu,
@@ -635,7 +652,7 @@ public class OCFileListFragment extends ExtendedListFragment implements
         @Override
         public boolean onActionItemClicked(ActionMode mode, MenuItem item) {
             Set<OCFile> checkedFiles = mAdapter.getCheckedItems();
-            return onFileActionChosen(item.getItemId(), checkedFiles);
+            return onFileActionChosen(item, checkedFiles);
         }
 
         /**
@@ -713,7 +730,7 @@ public class OCFileListFragment extends ExtendedListFragment implements
     }
 
     @Override
-    public void onPrepareOptionsMenu(Menu menu) {
+    public void onPrepareOptionsMenu(@NonNull Menu menu) {
         Menu mMenu = menu;
 
         if (mOriginalMenuItems.size() == 0) {
@@ -730,20 +747,20 @@ public class OCFileListFragment extends ExtendedListFragment implements
             if (menu.findItem(R.id.action_sort) == null) {
                 menuItemOrig = mOriginalMenuItems.get(1);
                 menu.add(menuItemOrig.getGroupId(), menuItemOrig.getItemId(), menuItemOrig.getOrder(),
-                        menuItemOrig.getTitle());
+                         menuItemOrig.getTitle());
             }
 
         } else if (menuItemAddRemoveValue == MenuItemAddRemove.ADD_GRID_AND_SORT) {
             if (menu.findItem(R.id.action_switch_view) == null) {
                 menuItemOrig = mOriginalMenuItems.get(0);
                 menu.add(menuItemOrig.getGroupId(), menuItemOrig.getItemId(), menuItemOrig.getOrder(),
-                        menuItemOrig.getTitle());
+                         menuItemOrig.getTitle());
             }
 
             if (menu.findItem(R.id.action_sort) == null) {
                 menuItemOrig = mOriginalMenuItems.get(1);
                 menu.add(menuItemOrig.getGroupId(), menuItemOrig.getItemId(), menuItemOrig.getOrder(),
-                        menuItemOrig.getTitle());
+                         menuItemOrig.getTitle());
             }
         } else if (menuItemAddRemoveValue == MenuItemAddRemove.REMOVE_SEARCH) {
             menu.removeItem(R.id.action_search);
@@ -751,19 +768,19 @@ public class OCFileListFragment extends ExtendedListFragment implements
             if (menu.findItem(R.id.action_switch_view) == null) {
                 menuItemOrig = mOriginalMenuItems.get(0);
                 menu.add(menuItemOrig.getGroupId(), menuItemOrig.getItemId(), menuItemOrig.getOrder(),
-                        menuItemOrig.getTitle());
+                         menuItemOrig.getTitle());
             }
 
             if (menu.findItem(R.id.action_sort) == null) {
                 menuItemOrig = mOriginalMenuItems.get(1);
                 menu.add(menuItemOrig.getGroupId(), menuItemOrig.getItemId(), menuItemOrig.getOrder(),
-                        menuItemOrig.getTitle());
+                         menuItemOrig.getTitle());
             }
 
             if (menu.findItem(R.id.action_search) == null) {
                 menuItemOrig = mOriginalMenuItems.get(2);
                 menu.add(menuItemOrig.getGroupId(), menuItemOrig.getItemId(), menuItemOrig.getOrder(),
-                        menuItemOrig.getTitle());
+                         menuItemOrig.getTitle());
             }
         } else if (menuItemAddRemoveValue == MenuItemAddRemove.REMOVE_SORT) {
             menu.removeItem(R.id.action_sort);
@@ -773,6 +790,36 @@ public class OCFileListFragment extends ExtendedListFragment implements
             menu.removeItem(R.id.action_switch_view);
             menu.removeItem(R.id.action_search);
         }
+
+        // create rich workspace
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP
+            && menu.findItem(R.id.action_create_rich_workspace) != null
+            && mFile != null) {
+            menu.findItem(R.id.action_create_rich_workspace).setVisible(
+                TextUtils.isEmpty(mFile.getRichWorkspace()));
+        }
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(@NonNull MenuItem item) {
+        if (R.id.action_create_rich_workspace == item.getItemId()) {
+            new Thread(() -> {
+                RemoteOperationResult result = new RichWorkspaceDirectEditingRemoteOperation(mFile.getRemotePath())
+                    .execute(accountManager.getUser().toPlatformAccount(), requireContext());
+
+                if (result.isSuccess()) {
+                    String url = (String) result.getSingleData();
+                    mContainerActivity.getFileOperationsHelper().openRichWorkspaceWithTextEditor(mFile,
+                                                                                                 url,
+                                                                                                 requireContext());
+                } else {
+                    DisplayUtils.showSnackMessage(getView(), R.string.failed_to_start_editor);
+                }
+            }).start();
+            return true;
+        }
+
+        return super.onOptionsItemSelected(item);
     }
 
     /**
@@ -935,7 +982,7 @@ public class OCFileListFragment extends ExtendedListFragment implements
                         }
                     } else if (file.isDown() && MimeTypeUtil.isVCard(file)) {
                         ((FileDisplayActivity) mContainerActivity).startContactListFragment(file);
-                    } else if (PreviewTextFragment.canBePreviewed(file)) {
+                    } else if (PreviewTextFileFragment.canBePreviewed(file)) {
                         ((FileDisplayActivity) mContainerActivity).startTextPreview(file, false);
                     } else if (file.isDown()) {
                         if (PreviewMediaFragment.canBePreviewed(file)) {
@@ -945,6 +992,7 @@ public class OCFileListFragment extends ExtendedListFragment implements
                             mContainerActivity.getFileOperationsHelper().openFile(file);
                         }
                     } else {
+                        // file not downloaded, check for streaming, remote editing
                         User account = accountManager.getUser();
                         OCCapability capability = mContainerActivity.getStorageManager()
                             .getCapability(account.getAccountName());
@@ -953,8 +1001,13 @@ public class OCFileListFragment extends ExtendedListFragment implements
                                 .isMediaStreamingSupported()) {
                             // stream media preview on >= NC14
                             ((FileDisplayActivity) mContainerActivity).startMediaPreview(file, 0, true, true, true);
+                        } else if (FileMenuFilter.isEditorAvailable(requireContext().getContentResolver(),
+                                                                    accountManager.getUser(),
+                                                                    file.getMimeType()) &&
+                            android.os.Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+                            mContainerActivity.getFileOperationsHelper().openFileWithTextEditor(file, getContext());
                         } else if (capability.getRichDocumentsMimeTypeList().contains(file.getMimeType()) &&
-                            android.os.Build.VERSION.SDK_INT >= RichDocumentsWebView.MINIMUM_API &&
+                            android.os.Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP &&
                             capability.getRichDocumentsDirectEditing().isTrue()) {
                             mContainerActivity.getFileOperationsHelper().openFileAsRichDocument(file, getContext());
                         } else {
@@ -993,11 +1046,11 @@ public class OCFileListFragment extends ExtendedListFragment implements
     /**
      * Start the appropriate action(s) on the currently selected files given menu selected by the user.
      *
-     * @param menuId       Identifier of the action menu selected by the user
+     * @param item       MenuItem selected by the user
      * @param checkedFiles List of files selected by the user on which the action should be performed
      * @return 'true' if the menu selection started any action, 'false' otherwise.
      */
-    public boolean onFileActionChosen(int menuId, Set<OCFile> checkedFiles) {
+    public boolean onFileActionChosen(MenuItem item, Set<OCFile> checkedFiles) {
         if (checkedFiles.isEmpty()) {
             return false;
         }
@@ -1005,7 +1058,7 @@ public class OCFileListFragment extends ExtendedListFragment implements
         if (checkedFiles.size() == SINGLE_SELECTION) {
             /// action only possible on a single file
             OCFile singleFile = checkedFiles.iterator().next();
-            switch (menuId) {
+            switch (item.getItemId()) {
                 case R.id.action_send_share_file: {
                     mContainerActivity.getFileOperationsHelper().sendShareFile(singleFile);
                     return true;
@@ -1018,9 +1071,24 @@ public class OCFileListFragment extends ExtendedListFragment implements
                     mContainerActivity.getFileOperationsHelper().streamMediaFile(singleFile);
                     return true;
                 }
-                case R.id.action_open_file_as_richdocument: {
-                    mContainerActivity.getFileOperationsHelper().openFileAsRichDocument(singleFile, getContext());
-                    return true;
+                case R.id.action_edit: {
+                    // should not be necessary, as menu item is filtered, but better play safe
+                    if (android.os.Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+                        if (FileMenuFilter.isEditorAvailable(requireContext().getContentResolver(),
+                                                             accountManager.getUser(),
+                                                             singleFile.getMimeType())) {
+                            mContainerActivity.getFileOperationsHelper().openFileWithTextEditor(singleFile,
+                                                                                                getContext());
+                        } else {
+                            mContainerActivity.getFileOperationsHelper().openFileAsRichDocument(singleFile,
+                                                                                                getContext());
+                        }
+
+                        return true;
+                    } else {
+                        DisplayUtils.showSnackMessage(getView(), "Not supported on older than Android 5");
+                        return false;
+                    }
                 }
                 case R.id.action_rename_file: {
                     RenameFileDialogFragment dialog = RenameFileDialogFragment.newInstance(singleFile);
@@ -1050,7 +1118,7 @@ public class OCFileListFragment extends ExtendedListFragment implements
         }
 
         /// actions possible on a batch of files
-        switch (menuId) {
+        switch (item.getItemId()) {
             case R.id.action_remove_file: {
                 RemoveFilesDialogFragment dialog = RemoveFilesDialogFragment.newInstance(new ArrayList<>(checkedFiles), mActiveActionMode);
                 dialog.show(getFragmentManager(), ConfirmationDialogFragment.FTAG_CONFIRMATION);

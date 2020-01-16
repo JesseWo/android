@@ -227,7 +227,7 @@ public class UserAccountManagerImpl implements UserAccountManager {
     public Optional<User> getUser(CharSequence accountName) {
         Account account = getAccountByName(accountName.toString());
         User user =  createUserFromAccount(account);
-        return Optional.of(user);
+        return Optional.ofNullable(user);
     }
 
     @Override
@@ -307,11 +307,6 @@ public class UserAccountManagerImpl implements UserAccountManager {
     }
 
     @Override
-    public boolean isSearchSupported(Account account) {
-        return account != null && getServerVersion(account).isSearchSupported();
-    }
-
-    @Override
     public boolean isMediaStreamingSupported(Account account) {
         return account != null && getServerVersion(account).isMediaStreamingSupported();
     }
@@ -325,7 +320,8 @@ public class UserAccountManagerImpl implements UserAccountManager {
 
     @Override
     public  boolean accountOwnsFile(OCFile file, Account account) {
-        return !TextUtils.isEmpty(file.getOwnerId()) && account.name.split("@")[0].equals(file.getOwnerId());
+        final String ownerId = file.getOwnerId();
+        return TextUtils.isEmpty(ownerId) || account.name.split("@")[0].equals(ownerId);
     }
 
     public boolean migrateUserId() {

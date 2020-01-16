@@ -8,6 +8,7 @@
     <string name="account_icon">ikona računa</string>
     <string name="account_not_found">Računa ni mogoče najti!</string>
     <string name="action_clear_failed_uploads">Počisti dnevnik spodletelih pošiljanj</string>
+    <string name="action_edit">Uredi</string>
     <string name="action_empty_notifications">Počisti vsa obvestila</string>
     <string name="action_empty_trashbin">izprazni smeti</string>
     <string name="action_send_share">Pošlji/Omogoči souporabo</string>
@@ -76,9 +77,11 @@
     <string name="auto_upload_file_behaviour_kept_in_folder">ohranjeno v izvorni mapi, ker je ta le za branje</string>
     <string name="auto_upload_on_wifi">Pošiljaj le na nemerjeni povezavi Wi-Fi</string>
     <string name="auto_upload_path">/SamodejnoPošiljanje</string>
+    <string name="autoupload_configure">Nastavi</string>
     <string name="autoupload_create_new_custom_folder">Ustvari novo nastavitveno mapo po meri</string>
     <string name="autoupload_custom_folder">Nastavitev mape po meri</string>
     <string name="autoupload_disable_power_save_check">Onemogoči preverjanje porabe energije</string>
+    <string name="autoupload_hide_folder">Skrij mapo</string>
     <string name="avatar">Avatar</string>
     <string name="battery_optimization_close">Zapri</string>
     <string name="battery_optimization_disable">Onemogoči</string>
@@ -176,6 +179,8 @@
     <string name="create_new_folder">Ustvari novo mapo</string>
     <string name="create_new_presentation">Ustvari novo predstavitev</string>
     <string name="create_new_spreadsheet">Ustvari novo preglednico</string>
+    <string name="create_rich_workspace">Dodaj podrobnosti mape</string>
+    <string name="creates_rich_workspace">ustvari podrobnosti mape</string>
     <string name="credentials_disabled">Poverila so onemogočena</string>
     <string name="date_unknown">Neznano</string>
     <string name="default_credentials_wrong">Nepravilna poverila</string>
@@ -226,6 +231,7 @@
     <string name="drawer_quota_unlimited">Skupaj %1$s</string>
     <string name="drawer_synced_folders">Samodejno pošiljanje</string>
     <string name="edit_permission_label">uredi</string>
+    <string name="edit_rich_workspace">uredi podrobnosti mape</string>
     <string name="encrypted">Nastavi kot šifrirano</string>
     <string name="end_to_end_encryption_confirm_button">Nastavitev šifriranja</string>
     <string name="end_to_end_encryption_decrypting">Poteka odšifriranje ...</string>
@@ -257,6 +263,7 @@
     <string name="fab_label">Dodaj ali pošlji</string>
     <string name="failed_to_download">Podajanje datoteke na upravljalnik prenosov je spodletelo</string>
     <string name="failed_to_print">Tiskanje datoteke je spodletelo</string>
+    <string name="failed_to_start_editor">Začenjanje urejevalnika je spodletelo</string>
     <string name="fallback_weblogin_back">Nazaj</string>
     <string name="fallback_weblogin_text">Povrni na star način prijave</string>
     <string name="favorite">Dodaj med priljubljene</string>
@@ -497,6 +504,9 @@
     <string name="preview_image_error_no_local_file">Ni krajevne datoteke za predogled</string>
     <string name="preview_image_error_unknown_format">Te slike ni mogoče prikazati</string>
     <string name="privacy">Zasebnost</string>
+    <string name="push_notifications_not_implemented">Potisna obvestila so onemogočena zaradi odvisnosti od storitev Google Play.</string>
+    <string name="push_notifications_old_login">Ni mogoče prikazati potisnih obvestil zaradi pretečene prijavne seje. Priporočljivo je ponovno dodati račun med nastavitvami.</string>
+    <string name="push_notifications_temp_error">Potisna obvestila trenutno niso na voljo.</string>
     <string name="recommend_subject">Poskusite %1$s na vaši napravi!</string>
     <string name="recommend_text">Želim priporočiti program %1$s!\nPrejeti ga je mogoče prek: %2$s</string>
     <string name="recommend_urls">%1$s ali %2$s</string>
@@ -525,14 +535,18 @@
     <string name="screenshot_04_accounts_subline">na enem mestu</string>
     <string name="screenshot_05_autoUpload_heading">Samodejno pošiljanje</string>
     <string name="screenshot_05_autoUpload_subline">za vaše slike in posnetke</string>
+    <string name="screenshot_06_davdroid_heading">Koledar in stiki</string>
+    <string name="screenshot_06_davdroid_subline">Uskladi z DAVx5</string>
     <string name="search_users_and_groups_hint">Iskanje uporabnikov in skupin</string>
     <string name="select_all">Izberi vse</string>
-    <string name="select_template">IZbor predloge</string>
+    <string name="select_template">Izbor predloge</string>
     <string name="send">Pošlji</string>
     <string name="send_note">Pošlji sporočilo prejemniku</string>
+    <string name="sendbutton_description">Ikona gumba za pošiljanje</string>
     <string name="set_as">Nastavi kot</string>
     <string name="set_picture_as">Uporabi sliko kot</string>
     <string name="setup_btn_connect">Poveži</string>
+    <string name="share">Souporaba</string>
     <string name="share_add_user_or_group">Dodaj uporabnika ali skupino</string>
     <string name="share_dialog_title">Souporaba</string>
     <string name="share_email_clarification">%1$s (e-pošta)</string>
@@ -541,6 +555,7 @@
     <string name="share_get_public_link_button">Pridobi povezavo</string>
     <string name="share_group_clarification">%1$s (skupina)</string>
     <string name="share_internal_link">Notranja povezava mesta souporabe</string>
+    <string name="share_internal_link_text">Deluje le za uporabnike z dostopom do %1$s</string>
     <string name="share_known_remote_clarification">%1$s ( pri %2$s )</string>
     <string name="share_link_empty_password">Vpisati je treba geslo.</string>
     <string name="share_link_file_error">Prišlo je do napake med poskusom omogočanja souporabe te datoteke ali mape</string>
@@ -559,6 +574,7 @@
     <string name="share_privilege_can_share">lahko omogoči souporabo</string>
     <string name="share_privilege_unshare">Prekini souporabo</string>
     <string name="share_remote_clarification">%1$s (oddaljeno)</string>
+    <string name="share_room_clarification">%1$s (pogovor)</string>
     <string name="share_search">Ime, ID zveznega oblaka ali elektronski naslov ...</string>
     <string name="share_send_note">Sporočilo za prejemnika</string>
     <string name="share_via_link_edit_permission_label">Dovoli urejanje</string>
@@ -573,6 +589,8 @@
     <string name="share_with_edit_title">Omogoči souporabo z %1$s</string>
     <string name="share_with_title">Omogoči souporabo …</string>
     <string name="share_with_user_section_title">Omogoči souporabo s skupino ali z uporabnikom</string>
+    <string name="shared_icon_share">souporaba</string>
+    <string name="shared_icon_shared">v souporabi</string>
     <string name="signup_with_provider">Prijava prek ponudnika</string>
     <string name="sort_by">Razvrsti</string>
     <string name="sort_by_modification_date_ascending">najprej najnovejše</string>
@@ -617,6 +635,7 @@
     <string name="storage_pictures">Slike</string>
     <string name="stream">Pretakaj s programom ...</string>
     <string name="stream_not_possible_headline">Notranji pretok ni mogoč</string>
+    <string name="stream_not_possible_message">Poskusite prejeti predstavno vsebino, ali pa uporabiti zunanji program.</string>
     <string name="subject_shared_with_you">\"%1$s\" vam je oddan v souporabo</string>
     <string name="subject_user_shared_with_you">Uporabnik %1$s je omogočil souporabo \"%2$s\"</string>
     <string name="sync_conflicts_in_favourites_ticker">Zaznani spori</string>
@@ -644,6 +663,7 @@
     <string name="timeout_richDocuments">Nalaganje poteka nepričakovano dolgo ...</string>
     <string name="trashbin_activity_title">Izbrisane datoteke</string>
     <string name="trashbin_empty_headline">Ni izbrisanih datotek</string>
+    <string name="trashbin_empty_message">Izbrisane datoteke je mogoče tudi povrniti.</string>
     <string name="trashbin_file_not_deleted">Datoteke %1$s ni mogoče izbrisati!</string>
     <string name="trashbin_file_not_restored">Datoteke %1$s ni mogoče obnoviti!</string>
     <string name="trashbin_loading_failed">Nalaganje smeti je spodletelo!</string>

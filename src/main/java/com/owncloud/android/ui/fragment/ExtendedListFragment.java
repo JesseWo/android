@@ -27,6 +27,7 @@ package com.owncloud.android.ui.fragment;
 import android.animation.LayoutTransition;
 import android.app.Activity;
 import android.content.Context;
+import android.content.res.ColorStateList;
 import android.content.res.Configuration;
 import android.graphics.Color;
 import android.graphics.PorterDuff;
@@ -53,7 +54,6 @@ import android.widget.ProgressBar;
 import android.widget.TextView;
 
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
-import com.nextcloud.client.account.User;
 import com.nextcloud.client.account.UserAccountManager;
 import com.nextcloud.client.di.Injectable;
 import com.nextcloud.client.preferences.AppPreferences;
@@ -305,14 +305,10 @@ public class ExtendedListFragment extends Fragment implements
                 handler.postDelayed(new Runnable() {
                     @Override
                     public void run() {
-                        User user = accountManager.getUser();
-                        if (user.getServer().getVersion().isSearchSupported()) {
-                            EventBus.getDefault().post(new SearchEvent(query,
-                                SearchRemoteOperation.SearchType.FILE_SEARCH, SearchEvent.UnsetType.NO_UNSET));
-                        } else {
-                            OCFileListAdapter fileListListAdapter = (OCFileListAdapter) adapter;
-                            fileListListAdapter.getFilter().filter(query);
-                        }
+                        EventBus.getDefault().post(new SearchEvent(query,
+                                                                   SearchRemoteOperation.SearchType.FILE_SEARCH,
+                                                                   SearchEvent.UnsetType.NO_UNSET));
+
                     }
                 }, delay);
             } else if (adapter instanceof LocalFileListAdapter) {
@@ -429,8 +425,8 @@ public class ExtendedListFragment extends Fragment implements
         mEmptyListHeadline = view.findViewById(R.id.empty_list_view_headline);
         mEmptyListIcon = view.findViewById(R.id.empty_list_icon);
         mEmptyListProgress = view.findViewById(R.id.empty_list_progress);
-        mEmptyListProgress.getIndeterminateDrawable().setColorFilter(ThemeUtils.primaryColor(getContext()),
-                PorterDuff.Mode.SRC_IN);
+        mEmptyListProgress.getIndeterminateDrawable().setColorFilter(ThemeUtils.primaryColor(getContext(), true),
+                                                                     PorterDuff.Mode.SRC_IN);
     }
 
     /**
@@ -613,10 +609,13 @@ public class ExtendedListFragment extends Fragment implements
             getActivity().runOnUiThread(() -> {
                 if (enabled) {
                     mFabMain.setEnabled(true);
-                    ThemeUtils.tintDrawable(mFabMain.getBackground(), ThemeUtils.primaryColor(getContext()));
+                    int primaryColor = ThemeUtils.primaryColor(getContext());
+                    mFabMain.setBackgroundTintList(ColorStateList.valueOf(primaryColor));
+                    mFabMain.setRippleColor(primaryColor);
                 } else {
                     mFabMain.setEnabled(false);
-                    ThemeUtils.tintDrawable(mFabMain.getBackground(), Color.GRAY);
+                    mFabMain.setBackgroundTintList(ColorStateList.valueOf(Color.GRAY));
+                    mFabMain.setRippleColor(Color.GRAY);
                 }
             });
         }

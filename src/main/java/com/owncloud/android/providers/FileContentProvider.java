@@ -719,7 +719,8 @@ public class FileContentProvider extends ContentProvider {
                        + ProviderTableMeta.FILE_OWNER_ID + TEXT
                        + ProviderTableMeta.FILE_OWNER_DISPLAY_NAME + TEXT
                        + ProviderTableMeta.FILE_NOTE + TEXT
-                       + ProviderTableMeta.FILE_SHAREES + " TEXT);"
+                       + ProviderTableMeta.FILE_SHAREES + TEXT
+                       + ProviderTableMeta.FILE_RICH_WORKSPACE + " TEXT);"
         );
     }
 
@@ -789,7 +790,8 @@ public class FileContentProvider extends ContentProvider {
                        + ProviderTableMeta.CAPABILITIES_RICHDOCUMENT_TEMPLATES + INTEGER
                        + ProviderTableMeta.CAPABILITIES_RICHDOCUMENT_OPTIONAL_MIMETYPE_LIST + TEXT
                        + ProviderTableMeta.CAPABILITIES_SHARING_PUBLIC_ASK_FOR_OPTIONAL_PASSWORD + INTEGER
-                       + ProviderTableMeta.CAPABILITIES_RICHDOCUMENT_PRODUCT_NAME + " TEXT );");
+                       + ProviderTableMeta.CAPABILITIES_RICHDOCUMENT_PRODUCT_NAME + TEXT
+                       + ProviderTableMeta.CAPABILITIES_DIRECT_EDITING_ETAG + " TEXT );");
     }
 
     private void createUploadsTable(SQLiteDatabase db) {
@@ -2064,17 +2066,41 @@ public class FileContentProvider extends ContentProvider {
             if (!upgraded) {
                 Log_OC.i(SQL, String.format(Locale.ENGLISH, UPGRADE_VERSION_MSG, oldVersion, newVersion));
             }
-        }
 
-        @Override
-        public void onDowngrade(SQLiteDatabase db, int oldVersion, int newVersion) {
-            if (oldVersion == 25 && newVersion == 24) {
-                db.execSQL(ALTER_TABLE + ProviderTableMeta.FILE_TABLE_NAME +
-                               REMOVE_COLUMN + ProviderTableMeta.FILE_IS_ENCRYPTED);
-                db.execSQL(ALTER_TABLE + ProviderTableMeta.FILE_TABLE_NAME +
-                               REMOVE_COLUMN + ProviderTableMeta.FILE_ENCRYPTED_NAME);
-                db.execSQL(ALTER_TABLE + ProviderTableMeta.CAPABILITIES_TABLE_NAME +
-                               REMOVE_COLUMN + ProviderTableMeta.CAPABILITIES_END_TO_END_ENCRYPTION);
+            if (oldVersion < 52 && newVersion >= 52) {
+                Log_OC.i(SQL, "Entering in the #52 add etag for directEditing to capability");
+                db.beginTransaction();
+                try {
+                    db.execSQL(ALTER_TABLE + ProviderTableMeta.CAPABILITIES_TABLE_NAME +
+                                   ADD_COLUMN + ProviderTableMeta.CAPABILITIES_DIRECT_EDITING_ETAG + " TEXT ");
+
+                    upgraded = true;
+                    db.setTransactionSuccessful();
+                } finally {
+                    db.endTransaction();
+                }
+            }
+
+            if (!upgraded) {
+                Log_OC.i(SQL, String.format(Locale.ENGLISH, UPGRADE_VERSION_MSG, oldVersion, newVersion));
+            }
+
+            if (oldVersion < 53 && newVersion >= 53) {
+                Log_OC.i(SQL, "Entering in the #53 add rich workspace to file table");
+                db.beginTransaction();
+                try {
+                    db.execSQL(ALTER_TABLE + ProviderTableMeta.FILE_TABLE_NAME +
+                                   ADD_COLUMN + ProviderTableMeta.FILE_RICH_WORKSPACE + " TEXT ");
+
+                    upgraded = true;
+                    db.setTransactionSuccessful();
+                } finally {
+                    db.endTransaction();
+                }
+            }
+
+            if (!upgraded) {
+                Log_OC.i(SQL, String.format(Locale.ENGLISH, UPGRADE_VERSION_MSG, oldVersion, newVersion));
             }
         }
     }
